@@ -8,56 +8,41 @@
 <script src="common/config.js"></script>
 </head>
 <body>
-<button onclick="chengeStream(0);">High</button><button onclick="chengeStream(1);">Low</button>
-<div id="log"></div>
-<div id="agora_remote" style="width:1280px;height:720px;"></div>
-<script language="javascript">
-var client, localStream, remoteStream;
-
-client = AgoraRTC.createClient({mode: 'live', codec:'h264'});
-
-client.init(app_id, function () {
-  client.join("", "demo", null, function(uid) {
-    client.enableDualStream(function() {
-      //client.setLowStreamParameter({birate:140, framerate:10, height:180, width:320});
-      console.log("enable dual stream success.");
-    }, function(err) {
-    });
-
-    localStream = AgoraRTC.createStream({streamID: uid, audio: true, video:true, screen: false});
-    localStream.setVideoProfile("720p");
-    localStream.init(function() {
-      client.publish(localStream, function (err) {});
-    }, function (err) {});
-
-  }, function(err) {});
-}, function (err) {});
-
-client.on('stream-added', function (evt) {
-  var stream = evt.stream;
-  client.subscribe(stream, function (err) {});
-});
-
-client.on('stream-subscribed', function (evt) {
-  remoteStream = evt.stream;
-  remoteStream.play('agora_remote');
-});
-
-function chengeStream(streamType){
-  client.setRemoteVideoStreamType(remoteStream, streamType);
-}
-
-setInterval(function() {
-  if(remoteStream){
-    remoteStream.getStats(function(stats){
-    console.log("---------------");
-    for(var i in stats){
-      console.log(i+":"+stats[i]);
-    }
+  <button onclick="startAudioMixing();">AudioMixing</button>
+  <div id="agora_local" style="width:1280px;height:720px;"></div>
+  <div id="agora_remote" style="width:1280px;height:720px;"></div>
+  <script language="javascript">
+  var client, localStream, remoteStream;
+  
+  client = AgoraRTC.createClient({mode: 'live', codec:'h264'});
+  
+  client.init(app_id, function () {
+    client.join("", "demo", null, function(uid) {
+      localStream = AgoraRTC.createStream({streamID: uid, audio: true, video:true, screen: false});
+      localStream.setVideoProfile("720p");
+      localStream.init(function() {
+        client.publish(localStream, function (err) {});
+        localStream.play("agora_local");
+      }, function (err) {});
+  
+    }, function(err) {});
+  }, function (err) {});
+  
+  client.on('stream-added', function (evt) {
+    var stream = evt.stream;
+    client.subscribe(stream, function (err) {});
   });
+  
+  client.on('stream-subscribed', function (evt) {
+    remoteStream = evt.stream;
+    remoteStream.play('agora_remote');
+  });
+  
+  function startAudioMixing(){
+    localStream.startAudioMixing({filePath:"/path/to/file.mp3",cycle:1,playTime:0,loop:false,replace:false},function (err) {
+      console.log("audiomix err:"+err);
+    });
   }
-}, 2000);
-
-</script>
+  </script>
 </body>
 </html>
